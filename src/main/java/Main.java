@@ -4,8 +4,11 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 public class Main {
+    private static final String USER_AGENT_HEADER_KEY = "User-Agent";
+
     public static void main(String[] args) {
         System.out.println("Logs from your program will appear here!");
+
 
         ServerSocket serverSocket = null;
         Socket clientSocket = null;
@@ -15,12 +18,14 @@ public class Main {
             serverSocket.setReuseAddress(true);
             clientSocket = serverSocket.accept();
             HttpRequest httpRequest = new HttpRequest(clientSocket.getInputStream());
-            if (httpRequest.getPath().equals("/")) {
+            if (matches(httpRequest, "/", "GET")) {
                 byte[] bytes = handleSimpleRequest(httpRequest);
                 writeOutputStream(clientSocket, bytes);
-            } else if (httpRequest.getPath() != null &&
-                    httpRequest.getPath().startsWith("/echo")) {
+            } else if (matchesStartsWith(httpRequest, "/echo", "GET")) {
                 byte[] bytes = handleEchoRequest(httpRequest);
+                writeOutputStream(clientSocket, bytes);
+            } else if (matches(httpRequest, "/user-agent", "GET")) {
+                byte[] bytes = handleUserAgentRequest(httpRequest);
                 writeOutputStream(clientSocket, bytes);
             } else {
                 byte[] bytes = handleNotFoundRequest(httpRequest);
@@ -50,6 +55,30 @@ public class Main {
 
     private static byte[] handleNotFoundRequest(HttpRequest httpRequest) {
         return "HTTP/1.1 404 Not Found\r\n\r\n".getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static boolean matchesStartsWith(HttpRequest httpRequest, String pathPrefix, String method) {
+        boolean pathMathces = httpRequest.getPath() != null &&
+                httpRequest.getPath().startsWith(pathPrefix);
+        boolean methodMatches = method.equals(httpRequest.getMethod());
+        return pathMathces && methodMatches;
+    }
+
+    private static boolean matches(HttpRequest httpRequest, String path, String method) {
+        boolean pathMathces = path.equals(httpRequest.getPath());
+        boolean methodMatches = method.equals(httpRequest.getMethod());
+        return pathMathces && methodMatches;
+    }
+
+    private static byte[] handleUserAgentRequest(HttpRequest httpRequest) {
+        String userAgent = httpRequest.getHeader(USER_AGENT_HEADER_KEY);
+        HttpResponse httpResponse = new HttpResponse(200, "OK");
+        httpResponse.setBody(userAgent);
+
+        String output = httpResponse.make();
+        System.out.println("The output :: ");
+        System.out.println(output);
+        return output.getBytes(StandardCharsets.UTF_8);
     }
 
     private static void writeOutputStream(Socket socket, byte[] bytes)

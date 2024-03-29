@@ -68,6 +68,10 @@ public class HttpRequest {
         return protocol;
     }
 
+    public String getHeader(String key){
+        return headers.get(key);
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(method, path, protocol, headers);

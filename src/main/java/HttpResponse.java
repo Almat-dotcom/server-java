@@ -64,7 +64,6 @@ public class HttpResponse {
             output.append(body);
         }
 
-        output.append(LINE_DIVISOR + LINE_DIVISOR);
         return output.toString();
     }
 }
