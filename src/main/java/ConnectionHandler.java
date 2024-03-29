@@ -30,7 +30,7 @@ public class ConnectionHandler implements Runnable {
                             + "Content-Type: text/plain\r\n"
                             + "Content-Length: " + content.length() + " \r\n\r\n" +
                             content + "\r\n\r\n";
-                } else if (startLineArr[1].equals("user-agent")) {
+                } else if (startLineArr[1].equals("/user-agent")) {
                     String userAgentHeader = "";
                     while ((userAgentHeader = bufferedReader.readLine()) != null) {
                         if (userAgentHeader.startsWith("User-Agent")) {
