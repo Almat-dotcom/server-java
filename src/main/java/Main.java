@@ -11,7 +11,7 @@ public class Main {
     //
      ServerSocket serverSocket = null;
      Socket clientSocket = null;
-git
+
      try {
        serverSocket = new ServerSocket(4221);
        serverSocket.setReuseAddress(true);
