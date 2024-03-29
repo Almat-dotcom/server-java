@@ -5,11 +5,8 @@ import java.nio.charset.StandardCharsets;
 
 public class Main {
     public static void main(String[] args) {
-        // You can use print statements as follows for debugging, they'll be visible when running tests.
         System.out.println("Logs from your program will appear here!");
 
-        // Uncomment this block to pass the first stage
-        //
         ServerSocket serverSocket = null;
         Socket clientSocket = null;
 
@@ -19,20 +16,44 @@ public class Main {
             clientSocket = serverSocket.accept();
             HttpRequest httpRequest = new HttpRequest(clientSocket.getInputStream());
             if (httpRequest.getPath().equals("/")) {
-                String output = "HTTP/1.1 200 OK\r\n\r\n";
-                clientSocket.getOutputStream().write(
-                        output.getBytes(StandardCharsets.UTF_8)
-                );
+                byte[] bytes = handleSimpleRequest(httpRequest);
+                writeOutputStream(clientSocket, bytes);
+            } else if (httpRequest.getPath() != null &&
+                    httpRequest.getPath().startsWith("/echo")) {
+                byte[] bytes = handleEchoRequest(httpRequest);
+                writeOutputStream(clientSocket, bytes);
             } else {
-                String output = "HTTP/1.1 404 Not Found\r\n\r\n";
-                clientSocket.getOutputStream().write(
-                        output.getBytes(StandardCharsets.UTF_8));
+                byte[] bytes = handleNotFoundRequest(httpRequest);
+                writeOutputStream(clientSocket, bytes);
             }
-
-            // Wait for connection from client.
             System.out.println("accepted new connection");
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         }
+    }
+
+    private static byte[] handleEchoRequest(HttpRequest httpRequest) {
+        String body = httpRequest.getPath().split("/echo/")[1];
+
+        HttpResponse httpResponse = new HttpResponse(200, "OK");
+        httpResponse.setBody(body);
+
+        String output = httpResponse.make();
+        System.out.println("The output :: ");
+        System.out.println(output);
+        return output.getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static byte[] handleSimpleRequest(HttpRequest httpRequest) {
+        return "HTTP/1.1 200 OK\r\n\r\n".getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static byte[] handleNotFoundRequest(HttpRequest httpRequest) {
+        return "HTTP/1.1 404 Not Found\r\n\r\n".getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static void writeOutputStream(Socket socket, byte[] bytes)
+            throws IOException {
+        socket.getOutputStream().write(bytes);
     }
 }
