@@ -25,7 +25,14 @@ public class HttpRequest {
             return;
         }
 
+        processMethodPathAndProtocol(line);
 
+        while ((line = bufferedReader.readLine()) != null) {
+            if (line.isEmpty()) {
+                break;
+            }
+            processHeader(line);
+        }
     }
 
     private void processMethodPathAndProtocol(String line) {
