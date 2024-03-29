@@ -4,25 +4,35 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 public class Main {
-  public static void main(String[] args) {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    System.out.println("Logs from your program will appear here!");
+    public static void main(String[] args) {
+        // You can use print statements as follows for debugging, they'll be visible when running tests.
+        System.out.println("Logs from your program will appear here!");
 
-    // Uncomment this block to pass the first stage
-    //
-     ServerSocket serverSocket = null;
-     Socket clientSocket = null;
+        // Uncomment this block to pass the first stage
+        //
+        ServerSocket serverSocket = null;
+        Socket clientSocket = null;
 
-     try {
-       serverSocket = new ServerSocket(4221);
-       serverSocket.setReuseAddress(true);
-       clientSocket = serverSocket.accept(); // Wait for connection from client.
-       System.out.println("accepted new connection");
-       clientSocket.getOutputStream().write(
-               "HTTP/1.1 200 OK\r\n\r\n".getBytes(StandardCharsets.UTF_8)
-       );
-     } catch (IOException e) {
-       System.out.println("IOException: " + e.getMessage());
-     }
-  }
+        try {
+            serverSocket = new ServerSocket(4221);
+            serverSocket.setReuseAddress(true);
+            clientSocket = serverSocket.accept();
+            HttpRequest httpRequest = new HttpRequest(clientSocket.getInputStream());
+            if (httpRequest.getPath().equals("/")) {
+                String output = "HTTP/1.1 200 OK\r\n\r\n";
+                clientSocket.getOutputStream().write(
+                        output.getBytes(StandardCharsets.UTF_8)
+                );
+            } else {
+                String output = "HTTP/1.1 404 Not Found\r\n\r\n";
+                clientSocket.getOutputStream().write(
+                        output.getBytes(StandardCharsets.UTF_8));
+            }
+
+            // Wait for connection from client.
+            System.out.println("accepted new connection");
+        } catch (IOException e) {
+            System.out.println("IOException: " + e.getMessage());
+        }
+    }
 }
