@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -47,15 +44,15 @@ public class ConnectionHandler implements Runnable {
                             + "Content-Length: " + userAgentHeaderArr[1].length() +
                             " \r\n\r\n" + userAgentHeaderArr[1] + "\r\n\r\n";
                 } else if (startLineArr[1].startsWith("/files/")) {
-                    String fileName= startLineArr[1].replace("/files/","");
-                    Path path = Paths.get(DirectoryStore.getDirectory(),fileName);
-                    if(Files.exists(path)){
+                    String fileName = startLineArr[1].replace("/files/", "");
+                    Path path = Paths.get(DirectoryStore.getDirectory(), fileName);
+                    if (Files.exists(path)) {
                         String fileContent = new String(Files.readAllBytes(path));
                         output = "HTTP/1.1 200 OK \r\n"
                                 + "Content-Type: application/octet-stream\r\n"
                                 + "Content-Length: " + fileContent.length() + " \r\n\r\n" +
                                 fileContent;
-                    }else {
+                    } else {
                         output = "HTTP/1.1 404 Not Found \r\n"
                                 + "Content-Length: 0 \r\n\r\n";
                     }
@@ -64,6 +61,32 @@ public class ConnectionHandler implements Runnable {
                 }
                 clientSocket.getOutputStream().write(
                         (output).getBytes(StandardCharsets.UTF_8));
+            } else if (startLineArr[0].equals("POST")) {
+                if (startLineArr[1].startsWith("/files/")) {
+                    String fileName = startLineArr[1].replace("/files", "");
+                    File file = new File(DirectoryStore.getDirectory() + fileName);
+                    if (!file.exists()) {
+                        if (file.createNewFile()) {
+                            System.out.println("New file created");
+                        }
+                    }
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        if (line.isEmpty()) {
+                            break;
+                        }
+                    }
+                    StringBuilder content = new StringBuilder();
+                    while (bufferedReader.ready()) {
+                        content.append((char) bufferedReader.read());
+                    }
+                    PrintWriter writer = new PrintWriter(file);
+                    writer.print(content.toString());
+                    writer.close();
+                    clientSocket.getOutputStream().write(
+                            ("HTTP/1.1 201 Created \r\n\r\n")
+                                    .getBytes(StandardCharsets.UTF_8));
+                }
             }
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
